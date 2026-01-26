@@ -1,0 +1,15 @@
+{
+  "name": "venv",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "Tymur Arduch",
+  "type": "commonjs",
+  "main": "baby_steps.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "prompt-sync": "^4.2.0"
+  }
+}
