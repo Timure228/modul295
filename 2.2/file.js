@@ -8,11 +8,11 @@ function leseDateiInhalt(filepath) {
                 return
             }
             resolve(data)
-        })
+        })  
     })
 }
 
-leseDateiInhalt('kost.txt')
+leseDateiInhalt('d.txt')
     .then(inhalt => {
         console.log('Die länge', inhalt.length)
     })
