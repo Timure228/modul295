@@ -3,7 +3,7 @@ const fs = require('node:fs')
 function verdoppeln(zahl) {
     return new Promise((resolve, reject) => {
         if (zahl === 0) {
-            reject('Это хуета какая-то')
+            reject('Reject')
         }
         resolve(zahl*2)
     })
