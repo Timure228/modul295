@@ -1,9 +1,16 @@
-const express = require('express')
-const { request } = require('node:http')
+const express = require('express');
+const session = require('express-session');
 
 const app = express()
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.use(session({
+    secret: "secret",
+    marker: "unauthentifiziert",
+    resave: false,
+    saveUninitialized: true
+}));
 
 let books = [
   { isbn: 1, title: "Der Verdacht", year: 2017, author: "Friedrich Dürrenmatt" },
@@ -24,7 +31,7 @@ let ausleihe = [
 
 app.get("/books", (request, response) => 
     {
-        response.send(books)
+        response.json(books)
     })
 
 app.get("/books/:idx", (req, res) => 
@@ -67,10 +74,13 @@ app.patch("/books/:idx", (req, res) => // take existing book and change it
     })
 
 // Ausleihen
-app.get("/lends", (req, res) => 
-    {
-        res.send(ausleihe)
-    })
+app.get("/lends", (req, res) => {
+    if (req.session.marker === "authentifiziert") {
+        req.session.marker = "authentifiziert"
+        res.send(ausleihe).end()
+    }
+    res.status(401).end()
+})
 
 app.get("/lends/:idx", (req, res) => 
     {
@@ -79,41 +89,45 @@ app.get("/lends/:idx", (req, res) =>
             return
         }
         res.send(ausleihe.find(ausleihe => ausleihe.id === idx));
-    })
+})
 
 
 app.post("/lends", (req, res) => 
     {
-        if (!req.body.customerId && !req.body.isbn) {
-            res.sendStatus(422)
-            return
-        }
-        else if (req.body.id === null && req.body.customerId === null && req.body.isbn === null && req.body.borrowedAt === null) {
-            console.log("id, customerId, isbn, borrowedAt dürfen nicht null sein!")
-            return
-        } 
-        else if (req.body.returnedAt === null && req.body.borrowedAt === null) {
-            console.log("returnedAt darf nicht null sein, solange die Ausleihe noch nicht offen ist!")
-            return
-        }
-        else if (ausleihe.find((ausleihe) => ausleihe.returnedAt === null && ausleihe.isbn === req.body.isbn)) {
-            console.log(`Das Buch mit ISBN ${req.body.isbn} ist bereits ausgeliehen worden`)
-            res.sendStatus(422)
-            return
-        }
-        else if (ausleihe.filter((ausleihe) => ausleihe.customerId === req.body.customerId).length === 3) {
-            console.log("Du hast schon 3 Bücher ausgeliehen! Es reicht dir schon...")
-            res.sendStatus(422)
-            return
-        }
+        if (req.session.marker === "authentifiziert") {
+            if (!req.body.customerId && !req.body.isbn) {
+                res.sendStatus(422)
+                return
+            }
+            else if (req.body.id === null && req.body.customerId === null && req.body.isbn === null && req.body.borrowedAt === null) {
+                console.log("id, customerId, isbn, borrowedAt dürfen nicht null sein!")
+                return
+            } 
+            else if (req.body.returnedAt === null && req.body.borrowedAt === null) {
+                console.log("returnedAt darf nicht null sein, solange die Ausleihe noch nicht offen ist!")
+                return
+            }
+            else if (ausleihe.find((ausleihe) => ausleihe.returnedAt === null && ausleihe.isbn === req.body.isbn)) {
+                console.log(`Das Buch mit ISBN ${req.body.isbn} ist bereits ausgeliehen worden`)
+                res.sendStatus(422)
+                return
+            }
+            else if (ausleihe.filter((ausleihe) => ausleihe.customerId === req.body.customerId).length === 3) {
+                console.log("Du hast schon 3 Bücher ausgeliehen! Es reicht dir schon...")
+                res.sendStatus(422)
+                return
+            }
 
-        let date = new Date()
-        req.body.id = ausleihe.length + 1 
-        req.body.borrowedAt = date.getDate()
-        req.body.returnedAt = null
-        
-        ausleihe = [...ausleihe, req.body];
-        res.send(req.body);
+            req.body.id = ausleihe.length + 1 
+            req.body.borrowedAt = new Date().toISOString
+            req.body.returnedAt = null
+
+            ausleihe = [...ausleihe, req.body];
+
+            req.session.marker = "authentifiziert"
+            res.send(req.body).end();
+        }
+        res.status(401).end();
     })
 
 app.delete("/lends/:idx", (req, res) => {
@@ -122,7 +136,61 @@ app.delete("/lends/:idx", (req, res) => {
     res.send(ausleihe)
 })
 
+// PATH /lends/:id
+app.patch("/lends/:id", (request, response) => {
+	const lendIndex = ausleihe.findIndex(lend => lend.id == request.params.id)
+	if(lendIndex < 0) return response.sendStatus(404)
+
+	const updatedLend = { ...ausleihe[lendIndex], ...request.body }
+
+	ausleihe.splice(lendIndex, 1, updatedLend)
+	response.json(updatedLend)  
+})
+
+
+const swaggerAutogen = require('swagger-autogen')();
+const doc = {
+  info: {
+    title: 'My Library',
+    description: 'My Library Website'
+  },
+  host: 'localhost:3000'
+};
+
+const outputFile = './swagger-output.json';
+const routes = ['./5-1.js'];
+
+swaggerAutogen(outputFile, routes, doc)
+
+const swaggerUi = require('swagger-ui-express');
+const swaggerDocument = require(outputFile);
+
+app.use('/swagger', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
+
+app.get("/login", (req, res) => {
+    res.sendFile("C:/Users/tymur.arduch/Desktop/Informatik/modul295/block5/login_formular.html")
+})
+
+app.post("/login", (req, res) => {
+    if (req.query.email === "desk@library.example" && req.query.password === "m295") {
+        req.session.marker = "authentifiziert"
+        res.status(201).end()
+    }
+    res.status(401).end()
+})
+
+app.get("/verify", (req, res) => {
+    if (req.session.marker === "authentifiziert") {
+        res.status(200).end()
+    }
+    res.status(401).end()
+})
+
+app.delete("/logout", (req, res) => {
+    req.session.marker = "unauthentifiziert"
+    res.end()
+})
+
 app.listen(3000, () => {
     console.log("Library Started!")
 })
-

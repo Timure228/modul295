@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Formular</title>
+</head>
+<body>
+    <form method="post">
+        <label>Username</label>
+        <input id="email" type="email" name="email"></input>
+        <label>Password</label>
+        <input id="password" type="text" name="password"></input>
+        <button id="submit_button" type="submit">Send</button>
+    </form>
+    <script>
+        let email = document.getElementsByTagName("input")[0].value
+        let pass = document.getElementsByTagName("input")[1].value
+
+        document.getElementsByTagName("form")[0].action = `http://127.0.0.1:3000/login?email=${email}&password=${pass}`
+    </script>
+</body>
+</html>
