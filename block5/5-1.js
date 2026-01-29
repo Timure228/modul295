@@ -1,3 +1,4 @@
+// Bibliothek APP
 const express = require('express');
 const session = require('express-session');
 
@@ -119,7 +120,7 @@ app.post("/lends", (req, res) =>
             }
 
             req.body.id = ausleihe.length + 1 
-            req.body.borrowedAt = new Date().toISOString
+            req.body.borrowedAt = (new Date().toISOString())
             req.body.returnedAt = null
 
             ausleihe = [...ausleihe, req.body];
@@ -132,8 +133,10 @@ app.post("/lends", (req, res) =>
 
 app.delete("/lends/:idx", (req, res) => {
     const idx = parseInt(req.params.idx)
-    ausleihe = ausleihe.filter((as) => as.id != idx)
-    res.send(ausleihe)
+    let current_lend = ausleihe.find((a) => a.id === idx)
+    let lendToUpdate = {...current_lend, "returnedAt": (new Date().toISOString()) };
+    ausleihe = ausleihe.map(lend => lend.id === idx ? lendToUpdate : lend);
+    res.send(lendToUpdate)
 })
 
 // PATH /lends/:id
