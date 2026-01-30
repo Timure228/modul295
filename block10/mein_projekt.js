@@ -97,7 +97,7 @@ app.put("/tasks/:id", (req, res) => {
         let id = parseInt(req.params.id)
         req.body.id = id
         tasks = tasks.map((task) => task.id === id ? req.body : task)
-        res.send(newTask)
+        return
     } res.status(401).end()
 })
 

@@ -8,7 +8,6 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(session({
     secret: "secret",
-    marker: "unauthentifiziert",
     resave: false,
     saveUninitialized: true
 }));
@@ -40,7 +39,7 @@ app.get("/books/:idx", (req, res) =>
         let idx = parseInt(req.params.idx)
         res.send(books.find(book => book.isbn === idx));
     })
-    
+
 app.post("/books", (req, res) => 
     {
         books = [...books, req.body];
@@ -71,7 +70,6 @@ app.patch("/books/:idx", (req, res) => // take existing book and change it
         books = books.map(book => book.isbn === idx ? bookToUpdate : book);
 
         res.send(books.find(book => book.isbn === idx))
-
     })
 
 // Ausleihen
@@ -149,7 +147,6 @@ app.patch("/lends/:id", (request, response) => {
 	response.json(updatedLend)  
 })
 
-
 const swaggerAutogen = require('swagger-autogen')();
 const doc = {
   info: {
@@ -182,16 +179,16 @@ app.post("/login", (req, res) => {
 })
 
 app.get("/verify", (req, res) => {
-    if (req.session.marker === "authentifiziert") {
+    if (req.session.marker) {
         res.status(200).end()
     }
     res.status(401).end()
 })
 
 app.delete("/logout", (req, res) => {
-    req.session.marker = "unauthentifiziert"
+    req.session.destroy()
     res.end()
-})
+})  
 
 app.listen(3000, () => {
     console.log("Library Started!")
