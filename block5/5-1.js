@@ -40,7 +40,7 @@ app.get("/books/:idx", (req, res) =>
         let idx = parseInt(req.params.idx)
         res.send(books.find(book => book.isbn === idx));
     })
-
+    
 app.post("/books", (req, res) => 
     {
         books = [...books, req.body];
@@ -91,7 +91,6 @@ app.get("/lends/:idx", (req, res) =>
         }
         res.send(ausleihe.find(ausleihe => ausleihe.id === idx));
 })
-
 
 app.post("/lends", (req, res) => 
     {

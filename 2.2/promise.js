@@ -9,6 +9,7 @@ function verdoppeln(zahl) {
     })
 }
 
-verdoppeln(0)
-    .then(k => {console.log("Die vedoppelte zahl ist " + k)})
-    .catch(err => {console.log(err)})
+verdoppeln(2)
+    .then(k => console.log("Die vedoppelte zahl ist " + k))
+    .catch(err => console.log(err))
+    .finally(console.log("Hallo final"))

@@ -26,13 +26,12 @@ let tasks = [
     }
 ]
 
-function isValid(json) {
-    return json.title === "" ? false : true
-}
+const nextId = () => Math.max(...tasks.map((task) => task.id))+1;
+
+function isValid(json) {return json.title === "" ? false : true;}
 
 app.use(session({
     secret: "supersecret",
-    aut_marker: "unauthorized",
     resave: false,
     saveUninitialized: true
 }));
@@ -60,14 +59,14 @@ app.delete("/logout", (req, res) => {
 // CRUD
 app.get("/tasks", (req, res) => {
     if (req.session.aut_marker) {
-        res.send(tasks)
+        return res.send(tasks)
     } res.status(401).end()
 })
 
 app.get("/tasks/:id", (req, res) => {
     let found_task = tasks.find((task) => task.id === parseInt(req.params.id))
     if (req.session.aut_marker && found_task) {
-        res.send(found_task)
+        return res.send(found_task)
     }
     else if (!req.session.aut_marker) {
         res.status(401).end()
@@ -76,7 +75,7 @@ app.get("/tasks/:id", (req, res) => {
 
 app.post("/tasks", (req, res) => {
     if (req.session.aut_marker && isValid(req.body)) {
-        req.body.id = tasks.length + 1 
+        req.body.id = nextId()
         if (!req.body.createdAt) {
             req.body.createdAt = new Date().toISOString()
         }
@@ -96,9 +95,8 @@ app.post("/tasks", (req, res) => {
 app.put("/tasks/:id", (req, res) => {
     if (req.session.aut_marker) {
         let id = parseInt(req.params.id)
-        let newTask = req.body
         req.body.id = id
-        tasks = tasks.map((task) => task.id === id ? newTask : task)
+        tasks = tasks.map((task) => task.id === id ? req.body : task)
         res.send(newTask)
     } res.status(401).end()
 })
@@ -106,7 +104,7 @@ app.put("/tasks/:id", (req, res) => {
 app.delete("/tasks/:id", (req, res) => {
     if (req.session.aut_marker) {
         tasks = tasks.filter((task) => task.id != parseInt(req.params.id))
-        res.send(req.params)
+        return res.send(req.params)
     } res.status(401).end()
 })
 
@@ -124,12 +122,12 @@ const doc = {
 const outputFile = './swagger-output_projekt.json';
 const routes = ['./mein_projekt.js'];
 
-swaggerAutogen(outputFile, routes, doc)
+swaggerAutogen(outputFile, routes, doc);
 
 const swaggerDocument = require(outputFile);
 
-app.use('/swagger', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
+app.use('/swagger', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // APP listen
 let port = 3000
-app.listen(port, () => console.log(`TODO APP started at port ${port}`))
+app.listen(port, console.log(`TODO APP started at port ${port}`))
